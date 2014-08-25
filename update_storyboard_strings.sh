@@ -42,8 +42,11 @@ do
             exit 1
         fi
         
-        iconv -f UTF-16 -t UTF-8 $newBaseStringsPath > $baseStringsPath
-        rm $newBaseStringsPath
+        # Only run iconv if $newBaseStringsPath exists to avoid overwriting existing
+        if [ -f $newBaseStringsPath ]; then
+          iconv -f UTF-16 -t UTF-8 $newBaseStringsPath > $baseStringsPath
+          rm $newBaseStringsPath
+        fi
 
         # Get all locale strings folder 
         for localeStringsDir in `find . -name "*$localeDirExt" -print`
