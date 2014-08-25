@@ -9,6 +9,9 @@ newStringsExt=".strings.new"
 oldStringsExt=".strings.old"
 localeDirExt=".lproj"
 
+oldIFS=$IFS
+IFS=$'\n'
+
 # Find storyboard file full path inside project folder
 for storyboardPath in `find . -name "*$storyboardExt" -print`
 do
@@ -31,6 +34,7 @@ do
         # Get New Base strings file full path and strings file name
         newBaseStringsPath=$(echo "$storyboardPath" | sed "s/$storyboardExt/$newStringsExt/")
         stringsFile=$(basename "$baseStringsPath")
+
         ibtool --export-strings-file $newBaseStringsPath $storyboardPath
         
         # ibtool sometimes fails for unknown reasons with "Interface Builder could not open 
@@ -48,8 +52,8 @@ do
           rm $newBaseStringsPath
         fi
 
-        # Get all locale strings folder 
-        for localeStringsDir in `find . -name "*$localeDirExt" -print`
+        # Get all locale strings folder
+        for localeStringsDir in `find $storyboardPath -name "*$localeDirExt" -print`
         do
             # Skip Base strings folder
             if [ $localeStringsDir != $storyboardDir ]; then
@@ -73,3 +77,5 @@ do
         echo "$storyboardPath file not modified."
     fi
 done
+
+IFS=$oldIFS
