@@ -32,6 +32,16 @@ do
         newBaseStringsPath=$(echo "$storyboardPath" | sed "s/$storyboardExt/$newStringsExt/")
         stringsFile=$(basename "$baseStringsPath")
         ibtool --export-strings-file $newBaseStringsPath $storyboardPath
+        
+        # ibtool sometimes fails for unknown reasons with "Interface Builder could not open 
+        # the document XXX because it does not exist."
+        # (maybe because Xcode is writing to the file at the same time?)
+        # In that case, abort the script.
+        if [[ $? -ne 0 ]] ; then
+            echo "Exiting due to ibtool error. Please run `killall -9 ibtoold` and try again."
+            exit 1
+        fi
+        
         iconv -f UTF-16 -t UTF-8 $newBaseStringsPath > $baseStringsPath
         rm $newBaseStringsPath
 
