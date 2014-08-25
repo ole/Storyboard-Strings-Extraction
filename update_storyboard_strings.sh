@@ -1,5 +1,7 @@
 #!/bin/sh
-# cls.sh - script to  Create Locale Strings auto
+#
+# update_storyboard_strings.sh - automatically extract translatable strings from storyboards and update strings files
+# Based on http://forums.macrumors.com/showpost.php?p=16060008&postcount=4 by mikezang
 
 storyboardExt=".storyboard"
 stringsExt=".strings"
@@ -13,6 +15,13 @@ do
     # Get Base strings file full path
     baseStringsPath=$(echo "$storyboardPath" | sed "s/$storyboardExt/$stringsExt/")
 
+    # Create base strings file if it doesn't exist
+    if ! [ -f $baseStringsPath ]; then
+      touch -r $storyboardPath $baseStringsPath
+      # Make base strings file older than the storyboard file
+      touch -A -01 $baseStringsPath
+    fi
+    
     # Create strings file only when storyboard file newer
     if find $storyboardPath -prune -newer $baseStringsPath -print | grep -q .; then
         # Get storyboard file name and folder 
