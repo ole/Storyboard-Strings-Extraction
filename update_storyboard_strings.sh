@@ -2,6 +2,14 @@
 #
 # update_storyboard_strings.sh - automatically extract translatable strings from storyboards and update strings files
 # Based on http://forums.macrumors.com/showpost.php?p=16060008&postcount=4 by mikezang
+# 
+# Needed gawk:
+# brew install gawk
+#
+# Needed realpath:
+# brew tap iveney/mocha
+# brew install realpath
+#
 
 storyboardExt=".storyboard"
 stringsExt=".strings"
@@ -27,6 +35,7 @@ do
     
     # Create strings file only when storyboard file newer
     if find $storyboardPath -prune -newer $baseStringsPath -print | grep -q .; then
+ 
         # Get storyboard file name and folder 
         storyboardFile=$(basename "$storyboardPath")
         storyboardDir=$(dirname "$storyboardPath")
@@ -35,6 +44,7 @@ do
         newBaseStringsPath=$(echo "$storyboardPath" | sed "s/$storyboardExt/$newStringsExt/")
         stringsFile=$(basename "$baseStringsPath")
 
+        echo "Extracting strings file"
         ibtool --export-strings-file $newBaseStringsPath $storyboardPath
         
         # ibtool sometimes fails for unknown reasons with "Interface Builder could not open 
@@ -53,21 +63,24 @@ do
         fi
 
         # Get all locale strings folder
-        for localeStringsDir in `find $storyboardPath -name "*$localeDirExt" -print`
+        for localeStringsDir in `find .. -name "*$localeDirExt" -print`
         do
             # Skip Base strings folder
-            if [ $localeStringsDir != $storyboardDir ]; then
-                localeStringsPath=$localeStringsDir/$stringsFile
+            rp1=$(realpath $storyboardDir)
+            rp2=$(realpath $localeStringsDir)
 
+            if [ $rp1 != $rp2 ]; then
+                localeStringsPath=$localeStringsDir/$stringsFile
                 # Just copy base strings file on first time
                 if [ ! -e $localeStringsPath ]; then
                     cp $baseStringsPath $localeStringsPath
                 else
                     oldLocaleStringsPath=$(echo "$localeStringsPath" | sed "s/$stringsExt/$oldStringsExt/")
                     cp $localeStringsPath $oldLocaleStringsPath
-
+      
                     # Merge baseStringsPath to localeStringsPath
-                    awk 'NR == FNR && /^\/\*/ {x=$0; getline; a[x]=$0; next} /^\/\*/ {x=$0; print; getline; $0=a[x]?a[x]:$0; printf $0"\n\n"}' $oldLocaleStringsPath $baseStringsPath > $localeStringsPath
+                    gawk 'NR == FNR && /^\/\*/ {x=$0; getline; a[x]=$0; next} /^\/\*/ {x=$0; print; getline; $0=a[x]?a[x]:$0; printf $0"\n\n"}' $oldLocaleStringsPath $baseStringsPath > $localeStringsPath
+                    #awk 'NR == FNR && /^\/\*/ {x=$0; getline; a[x]=$0; next} /^\/\*/ {x=$0; print; getline; $0=a[x]?a[x]:$0; printf $0"\n\n"}' $oldLocaleStringsPath $baseStringsPath > $localeStringsPath
 
                     rm $oldLocaleStringsPath
                 fi
